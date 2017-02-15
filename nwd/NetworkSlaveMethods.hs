@@ -164,18 +164,29 @@ xenopsAddVifCmd domid backend mac devid = printf "xl network-attach %s type=vif 
 xsBackendVifNode :: String -> String
 xsBackendVifNode = printf "/local/domain/%s/backend/vif" 
 
+xsBackendVwifNode :: String -> String
+xsBackendVwifNode = printf "/local/domain/%s/backend/vwif"
+
+xsPath :: String -> String -> String -> String -> IO (Maybe String)
+xsPath domid devid backendPath node = xsRead $ printf "%s/%s/%s/%s" backendPath domid devid node
+
+xsVifOrVwifPath :: String -> String -> String -> String -> IO (Maybe String)
+xsVifOrVwifPath domid devid backendDomid node = xsPath domid devid (xsBackendVifNode backendDomid) node `catchError` (\ex -> xsPath domid devid (xsBackendVwifNode backendDomid) node)
+
 xsVifNetwork :: String -> String -> String -> IO (Maybe String)
-xsVifNetwork domid devid backendDomid = xsRead $ printf "%s/%s/%s/bridge" (xsBackendVifNode backendDomid)  domid devid
---xsVifMac domid devid backendDomid = xsRead $ printf "%s/%s/%s/mac" (xsBackendVifNode backendDomid) domid devid
+xsVifNetwork domid devid backendDomid = xsVifOrVwifPath domid devid backendDomid "bridge"
 
 xsVifState :: String -> String -> String -> IO (Maybe String)
-xsVifState domid devid backendDomid = xsRead $ printf "%s/%s/%s/state" (xsBackendVifNode backendDomid)  domid devid
+xsVifState domid devid backendDomid = xsVifOrVwifPath domid devid backendDomid "state"
 
 xsVifFrontend :: String -> String -> String -> IO (Maybe String)
-xsVifFrontend domid devid backendDomid = xsRead $ printf "%s/%s/%s/frontend" (xsBackendVifNode backendDomid) domid devid
+xsVifFrontend domid devid backendDomid = xsVifOrVwifPath domid devid backendDomid "frontend"
 
 xsGuestDomains :: String -> IO ([String])
-xsGuestDomains backendDomid = xsDir (xsBackendVifNode backendDomid)
+xsGuestDomains backendDomid = do
+    vifNodes <- xsDir (xsBackendVifNode backendDomid)
+    vwifNodes <- xsDir (xsBackendVwifNode backendDomid)
+    return $ (vifNodes ++ vwifNodes)
 
 xsDevIds :: String -> String -> IO ([String])
 xsDevIds backendDomid guestDomid = xsDir $ printf "%s/%s" (xsBackendVifNode backendDomid) guestDomid
