@@ -97,8 +97,8 @@ wifiXsQueryAndExport slaveDomid slaveObj guestDomid= do -- info "exporting wifi 
                                wifiXsExportAp (activeApPath guestDomid) info
                                wifiXsExportFakeInfoAp guestDomid
 
-            activeApPath domid = "/local/domain/" ++ show guestDomid ++ "/wlan/0"
-            fakeInfoApPath domid = "/local/domain/" ++ show guestDomid ++ "/wlan/1"
+            activeApPath domid = "/local/domain/" ++ show domid ++ "/wlan/0"
+            fakeInfoApPath domid = "/local/domain/" ++ show domid ++ "/wlan/1"
 
 wifiQueryNm domid slaveNw =  do
     apInfo <- withNetworkSlave domid (NC.comCitrixXenclientNetworkConfigGetExtraInfo slaveService slaveNw)
